@@ -1,6 +1,7 @@
 package httpclient_test
 
 import (
+	"bytes"
 	"net/http"
 	"net/url"
 	"testing"
@@ -10,7 +11,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	base, err := url.Parse("https://google.com")
+	base, err := url.Parse("https://postman-echo.com")
 	if err != nil {
 		t.Fatalf("Failed to parse url")
 	}
@@ -19,9 +20,32 @@ func TestGet(t *testing.T) {
 	}
 	c.Timeout = time.Second * 10
 
-	res, err := c.Get("/doodles/")
+	res, err := c.Get("/get")
 	if err != nil {
-		t.Fatalf("Failed to get doodles: %v", err)
+		t.Fatalf("Failed to get: %v", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expect status %d but %d", http.StatusOK, res.StatusCode)
+	}
+}
+
+func TestPost(t *testing.T) {
+	base, err := url.Parse("https://postman-echo.com")
+	if err != nil {
+		t.Fatalf("Failed to parse url")
+	}
+
+	c := httpclient.HttpClient{
+		BaseURL: base,
+	}
+	c.Timeout = time.Second * 10
+
+	data := map[string]string{"name": "taro"}
+	body := bytes.NewBuffer(nil)
+	httpclient.JsonBody(data, body)
+	res, err := c.Post("/post", httpclient.ContentTypeJson, body)
+	if err != nil {
+		t.Fatalf("Failed to post: %v", err)
 	}
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("expect status %d but %d", http.StatusOK, res.StatusCode)
