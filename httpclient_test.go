@@ -42,12 +42,19 @@ func TestPost(t *testing.T) {
 
 	data := map[string]string{"name": "taro"}
 	body := bytes.NewBuffer(nil)
-	httpclient.JsonBody(data, body)
+	httpclient.EncodeJson(data, body)
 	res, err := c.Post("/post", httpclient.ContentTypeJson, body)
 	if err != nil {
 		t.Fatalf("Failed to post: %v", err)
 	}
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("expect status %d but %d", http.StatusOK, res.StatusCode)
+	}
+
+	var d interface{}
+	err = httpclient.DecodeJson(&d, res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		t.Fatalf("Failed to decode body")
 	}
 }
