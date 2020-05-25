@@ -10,6 +10,10 @@ import (
 	"github.com/maruware/go-httpclient"
 )
 
+type ResponseData struct {
+	URL string `json:"url"`
+}
+
 func TestGet(t *testing.T) {
 	base, err := url.Parse("https://postman-echo.com")
 	if err != nil {
@@ -56,5 +60,48 @@ func TestPost(t *testing.T) {
 	defer res.Body.Close()
 	if err != nil {
 		t.Fatalf("Failed to decode body")
+	}
+}
+
+func TestGetJson(t *testing.T) {
+	base, err := url.Parse("https://postman-echo.com")
+	if err != nil {
+		t.Fatalf("Failed to parse url")
+	}
+	c := httpclient.HttpClient{
+		BaseURL: base,
+	}
+	c.Timeout = time.Second * 10
+
+	var d ResponseData
+	err = c.GetJson("/get", &d)
+	if err != nil {
+		t.Fatalf("Failed to get: %v", err)
+	}
+	if len(d.URL) <= 0 {
+		t.Fatalf("Bad response data: %+v", d)
+	}
+}
+
+func TestPostJson(t *testing.T) {
+	base, err := url.Parse("https://postman-echo.com")
+	if err != nil {
+		t.Fatalf("Failed to parse url")
+	}
+
+	c := httpclient.HttpClient{
+		BaseURL: base,
+	}
+	c.Timeout = time.Second * 10
+
+	reqd := map[string]string{"name": "taro"}
+	var resd ResponseData
+	err = c.PostJson("/post", reqd, &resd)
+	if err != nil {
+		t.Fatalf("Failed to post: %v", err)
+	}
+
+	if len(resd.URL) <= 0 {
+		t.Fatalf("Bad response data: %+v", resd)
 	}
 }

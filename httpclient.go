@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -76,4 +77,44 @@ func (c *HttpClient) Delete(path string, contentType string, body io.Reader) (*h
 	}
 	req.Header.Add("Content-Type", contentType)
 	return c.send(req)
+}
+
+func (c *HttpClient) GetJson(path string, v interface{}) error {
+	req, err := c.newRequest("GET", path, nil)
+	if err != nil {
+		return err
+	}
+	res, err := c.send(req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+	if err := DecodeJson(v, res.Body); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *HttpClient) PostJson(path string, reqData interface{}, resData interface{}) error {
+	b := bytes.NewBuffer(nil)
+	if err := EncodeJson(reqData, b); err != nil {
+		return err
+	}
+
+	req, err := c.newRequest("POST", path, b)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", ContentTypeJson)
+	res, err := c.send(req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+	if err := DecodeJson(resData, res.Body); err != nil {
+		return err
+	}
+	return nil
 }
