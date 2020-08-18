@@ -22,7 +22,11 @@ func (c *HttpClient) newRequest(method, path string, body io.Reader) (*http.Requ
 	if err != nil {
 		return nil, err
 	}
-	req.Header = c.Header
+	for key, values := range c.Header {
+		for _, v := range values {
+			req.Header.Set(key, v)
+		}
+	}
 	return req, err
 }
 
