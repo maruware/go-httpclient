@@ -11,6 +11,7 @@ import (
 type HttpClient struct {
 	http.Client
 	BaseURL *url.URL
+	Header  http.Header
 }
 
 func (c *HttpClient) newRequest(method, path string, body io.Reader) (*http.Request, error) {
@@ -21,6 +22,7 @@ func (c *HttpClient) newRequest(method, path string, body io.Reader) (*http.Requ
 	if err != nil {
 		return nil, err
 	}
+	req.Header = c.Header
 	return req, err
 }
 
@@ -33,6 +35,10 @@ func (c *HttpClient) send(req *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("http status code error: %v", res.StatusCode)
 	}
 	return res, nil
+}
+
+func (c *HttpClient) SetHeader(key, value string) {
+	c.Header.Set(key, value)
 }
 
 func (c *HttpClient) Request(method, path string, body io.Reader) (*http.Response, error) {
