@@ -14,7 +14,11 @@ type HttpClient struct {
 	Header  http.Header
 }
 
-func (c *HttpClient) newRequest(method, path string, body io.Reader) (*http.Request, error) {
+type RequestOption struct {
+	Query string
+}
+
+func (c *HttpClient) newRequest(method, path string, body io.Reader, opt *RequestOption) (*http.Request, error) {
 	rel := &url.URL{Path: path}
 	u := c.BaseURL.ResolveReference(rel)
 
@@ -25,6 +29,11 @@ func (c *HttpClient) newRequest(method, path string, body io.Reader) (*http.Requ
 	for key, values := range c.Header {
 		for _, v := range values {
 			req.Header.Set(key, v)
+		}
+	}
+	if opt != nil {
+		if opt.Query != "" {
+			req.URL.RawQuery = opt.Query
 		}
 	}
 	return req, err
@@ -45,8 +54,8 @@ func (c *HttpClient) SetHeader(key, value string) {
 	c.Header.Set(key, value)
 }
 
-func (c *HttpClient) Request(method, path string, body io.Reader) (*http.Response, error) {
-	req, err := c.newRequest(method, path, body)
+func (c *HttpClient) Request(method, path string, body io.Reader, opt *RequestOption) (*http.Response, error) {
+	req, err := c.newRequest(method, path, body, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -54,25 +63,16 @@ func (c *HttpClient) Request(method, path string, body io.Reader) (*http.Respons
 	return c.send(req)
 }
 
-func (c *HttpClient) Get(path string) (*http.Response, error) {
-	req, err := c.newRequest("GET", path, nil)
+func (c *HttpClient) Get(path string, opt *RequestOption) (*http.Response, error) {
+	req, err := c.newRequest("GET", path, nil, opt)
 	if err != nil {
 		return nil, err
 	}
 	return c.send(req)
 }
 
-func (c *HttpClient) Post(path string, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := c.newRequest("POST", path, body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-Type", contentType)
-	return c.send(req)
-}
-
-func (c *HttpClient) Put(path string, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := c.newRequest("PUT", path, body)
+func (c *HttpClient) Post(path string, contentType string, body io.Reader, opt *RequestOption) (*http.Response, error) {
+	req, err := c.newRequest("POST", path, body, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +80,8 @@ func (c *HttpClient) Put(path string, contentType string, body io.Reader) (*http
 	return c.send(req)
 }
 
-func (c *HttpClient) Delete(path string, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := c.newRequest("DELETE", path, body)
+func (c *HttpClient) Put(path string, contentType string, body io.Reader, opt *RequestOption) (*http.Response, error) {
+	req, err := c.newRequest("PUT", path, body, opt)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +89,17 @@ func (c *HttpClient) Delete(path string, contentType string, body io.Reader) (*h
 	return c.send(req)
 }
 
-func (c *HttpClient) GetJson(path string, v interface{}) error {
-	req, err := c.newRequest("GET", path, nil)
+func (c *HttpClient) Delete(path string, contentType string, body io.Reader, opt *RequestOption) (*http.Response, error) {
+	req, err := c.newRequest("DELETE", path, body, opt)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", contentType)
+	return c.send(req)
+}
+
+func (c *HttpClient) GetJson(path string, v interface{}, opt *RequestOption) error {
+	req, err := c.newRequest("GET", path, nil, opt)
 	if err != nil {
 		return err
 	}
@@ -106,13 +115,13 @@ func (c *HttpClient) GetJson(path string, v interface{}) error {
 	return nil
 }
 
-func (c *HttpClient) PostJson(path string, reqData interface{}, resData interface{}) error {
+func (c *HttpClient) PostJson(path string, reqData interface{}, resData interface{}, opt *RequestOption) error {
 	b := bytes.NewBuffer(nil)
 	if err := EncodeJson(reqData, b); err != nil {
 		return err
 	}
 
-	req, err := c.newRequest("POST", path, b)
+	req, err := c.newRequest("POST", path, b, opt)
 	if err != nil {
 		return err
 	}

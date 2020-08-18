@@ -24,7 +24,7 @@ func TestGet(t *testing.T) {
 	}
 	c.Timeout = time.Second * 10
 
-	res, err := c.Get("/get")
+	res, err := c.Get("/get", nil)
 	if err != nil {
 		t.Fatalf("Failed to get: %v", err)
 	}
@@ -47,7 +47,10 @@ func TestPost(t *testing.T) {
 	data := map[string]string{"name": "taro"}
 	body := bytes.NewBuffer(nil)
 	httpclient.EncodeJson(data, body)
-	res, err := c.Post("/post", httpclient.ContentTypeJson, body)
+	opt := httpclient.RequestOption{
+		Query: "key=example",
+	}
+	res, err := c.Post("/post", httpclient.ContentTypeJson, body, &opt)
 	if err != nil {
 		t.Fatalf("Failed to post: %v", err)
 	}
@@ -74,7 +77,7 @@ func TestGetJson(t *testing.T) {
 	c.Timeout = time.Second * 10
 
 	var d ResponseData
-	err = c.GetJson("/get", &d)
+	err = c.GetJson("/get", &d, nil)
 	if err != nil {
 		t.Fatalf("Failed to get: %v", err)
 	}
@@ -96,7 +99,7 @@ func TestPostJson(t *testing.T) {
 
 	reqd := map[string]string{"name": "taro"}
 	var resd ResponseData
-	err = c.PostJson("/post", reqd, &resd)
+	err = c.PostJson("/post", reqd, &resd, nil)
 	if err != nil {
 		t.Fatalf("Failed to post: %v", err)
 	}
